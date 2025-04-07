@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Card Styling (Glassmorphism) */
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            color: white;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Form Styles */
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+            transition: 0.3s ease-in-out;
+            box-sizing: border-box;
+        }
+
+        input::placeholder {
+            color: #ddd;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Button */
+        .btn {
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            width: 100%;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #ffb74d, #ff7043);
+            transform: scale(1.05);
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-top: 6px solid #ff9800;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Results */
+        .results {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .results p {
+            font-size: 18px;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+
+        input[readonly] {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* Alert Messages */
+        .alert {
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 8px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Loan Calculator</h1>
+            <form id="loan-form">
+                <label for="amount">Loan Amount</label>
+                <input type="number" id="amount" placeholder="Enter amount">
+
+                <label for="interest">Interest Rate (%)</label>
+                <input type="number" id="interest" placeholder="Enter interest rate">
+
+                <label for="years">Years to Pay</label>
+                <input type="number" id="years" placeholder="Enter years">
+
+                <button type="submit" class="btn">Calculate</button>
+            </form>
+
+            <!-- Loader -->
+            <div id="loading" class="loader"></div>
+
+            <!-- Results -->
+            <div id="results" class="results">
+                <h2>Results</h2>
+                <p>Monthly Payment: <input type="text" id="monthly-payment" readonly></p>
+                <p>Total Payment: <input type="text" id="total-payment" readonly></p>
+                <p>Total Interest: <input type="text" id="total-interest" readonly></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loan-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            setTimeout(calculateResults, 2000);
+        });
+
+        function calculateResults() {
+            const amount = document.getElementById('amount');
+            const interest = document.getElementById('interest');
+            const years = document.getElementById('years');
+            const monthlyPayment = document.getElementById('monthly-payment');
+            const totalPayment = document.getElementById('total-payment');
+            const totalInterest = document.getElementById('total-interest');
+
+            const principal = parseFloat(amount.value);
+            const calculatedInterest = parseFloat(interest.value) / 100 / 12;
+            const calculatedPayments = parseFloat(years.value) * 12;
+
+            const x = Math.pow(1 + calculatedInterest, calculatedPayments);
+            const monthly = (principal * x * calculatedInterest) / (x - 1);
+
+            if (isFinite(monthly)) {
+                monthlyPayment.value = monthly.toFixed(2);
+                totalPayment.value = (monthly * calculatedPayments).toFixed(2);
+                totalInterest.value = ((monthly * calculatedPayments) - principal).toFixed(2);
+
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+            } else {
+                showError('Invalid input. Please check your numbers.');
+            }
+        }
+
+        function showError(error) {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert';
+            errorDiv.appendChild(document.createTextNode(error));
+
+            const card = document.querySelector('.card');
+            card.insertBefore(errorDiv, card.firstChild);
+
+            setTimeout(() => errorDiv.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
